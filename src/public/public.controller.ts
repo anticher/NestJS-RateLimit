@@ -1,5 +1,5 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { RateLimitGuard } from 'src/guards/rate-limit.guard';
+import { RateLimitGuard } from 'src/guards/rate-limit/rate-limit.guard';
 import { PublicService } from './public.service';
 
 @UseGuards(RateLimitGuard)

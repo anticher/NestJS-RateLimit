@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { RateLimitService } from './rate-limit/rate-limit.service';
+import { RateLimitService } from './rate-limit.service';
 
 @Injectable()
 export class RateLimitGuard implements CanActivate {
