@@ -4,6 +4,6 @@ import { PrivateController } from './private.controller';
 
 @Module({
   controllers: [PrivateController],
-  providers: [PrivateService]
+  providers: [PrivateService],
 })
 export class PrivateModule {}

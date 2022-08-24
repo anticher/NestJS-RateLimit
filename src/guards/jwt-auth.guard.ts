@@ -11,11 +11,16 @@ export class JwtAuthGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    console.log(context.switchToHttp().getRequest().headers);
     const headers = context.switchToHttp().getRequest().headers;
+
     if (!headers.authorization) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException({ description: 'no auth token' });
     }
+
+    if (headers.authorization !== `Bearer ${process.env.JWT_TEST_TOKEN}`) {
+      throw new UnauthorizedException({ description: 'incorrect auth token' });
+    }
+
     return true;
   }
 }
