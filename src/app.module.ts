@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PublicModule } from './public/public.module';
 import { PrivateModule } from './private/private.module';
+import { RateLimitModule } from './guards/rate-limit/rate-limit.module';
 
 const envType = process.env.NODE_ENV;
 
@@ -14,6 +15,7 @@ const envType = process.env.NODE_ENV;
     }),
     PublicModule,
     PrivateModule,
+    RateLimitModule,
   ],
   controllers: [AppController],
   providers: [AppService],
