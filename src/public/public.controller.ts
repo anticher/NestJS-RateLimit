@@ -1,8 +1,6 @@
-import { Controller, Get, SetMetadata, UseGuards } from '@nestjs/common';
-import { RateLimitGuard } from 'src/guards/rate-limit/rate-limit.guard';
+import { Controller, Get, SetMetadata } from '@nestjs/common';
 import { PublicService } from './public.service';
 
-@UseGuards(RateLimitGuard)
 @Controller('public')
 export class PublicController {
   constructor(private readonly publicService: PublicService) {}

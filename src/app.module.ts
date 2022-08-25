@@ -5,6 +5,8 @@ import { AppService } from './app.service';
 import { PublicModule } from './public/public.module';
 import { PrivateModule } from './private/private.module';
 import { RateLimitModule } from './guards/rate-limit/rate-limit.module';
+import { RateLimitGuard } from './guards/rate-limit/rate-limit.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 const envType = process.env.NODE_ENV;
 
@@ -18,6 +20,12 @@ const envType = process.env.NODE_ENV;
     RateLimitModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
+    },
+  ],
 })
 export class AppModule {}

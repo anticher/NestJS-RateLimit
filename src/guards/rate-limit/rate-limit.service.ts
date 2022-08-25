@@ -5,38 +5,23 @@ const millisecondsInSecond = 1000;
 
 @Injectable()
 export class RateLimitService {
-  private jwts: Map<string, number[]> = new Map();
-  private ips: Map<string, number[]> = new Map();
-  private jwtRequestLimit = Number(process.env.JWT_REQUEST_LIMIT);
-  private ipRequestLimit = Number(process.env.IP_REQUEST_LIMIT);
-  private requestLimitMinutes = Number(process.env.REQUEST_LIMIT_MINUTES);
+  private storage = { jwt: new Map(), ip: new Map() };
+  private limits = {
+    jwt: Number(process.env.JWT_REQUEST_LIMIT),
+    ip: Number(process.env.IP_REQUEST_LIMIT),
+    minutes: Number(process.env.REQUEST_LIMIT_MINUTES),
+  };
 
-  private addJwtRecord(
-    jwt: string,
+  private createNewRecord(
     requestTimeStamp: number,
     rateWeight: number,
-  ): boolean {
+  ): number[] {
     const newRecord = [];
     while (rateWeight > 0) {
       newRecord.push(requestTimeStamp);
       rateWeight -= 1;
     }
-    this.jwts.set(jwt, newRecord);
-    return true;
-  }
-
-  private addIpRecord(
-    ip: string,
-    requestTimeStamp: number,
-    rateWeight: number,
-  ): boolean {
-    const newRecord = [];
-    while (rateWeight > 0) {
-      newRecord.push(requestTimeStamp);
-      rateWeight -= 1;
-    }
-    this.ips.set(ip, newRecord);
-    return true;
+    return newRecord;
   }
 
   private getRemainingTime(
@@ -45,9 +30,11 @@ export class RateLimitService {
     limit: number,
   ): number {
     return (
-      this.requestLimitMinutes -
+      this.limits.minutes -
       Math.floor(
-        (timestamp - data[data.length - limit]) / 60 / millisecondsInSecond,
+        (timestamp - data[data.length - limit]) /
+          secondsInMinute /
+          millisecondsInSecond,
       )
     );
   }
@@ -64,8 +51,7 @@ export class RateLimitService {
 
   private getWindowStartTimestamp(timestamp: number): number {
     return (
-      timestamp -
-      this.requestLimitMinutes * secondsInMinute * millisecondsInSecond
+      timestamp - this.limits.minutes * secondsInMinute * millisecondsInSecond
     );
   }
 
@@ -84,15 +70,19 @@ export class RateLimitService {
     return newRecord;
   }
 
-  public jwtRateLimit(
-    jwt: string,
-    requestTimeStamp: number,
-    rateWeight: number,
-  ): boolean {
-    console.log(this.jwts.get(jwt));
-    const record = this.jwts.get(jwt);
+  public checkRateLimit(params: {
+    accessType: string;
+    accessKey: object;
+    requestTimeStamp: number;
+    rateWeight: number;
+  }): boolean {
+    const { accessType, accessKey, requestTimeStamp, rateWeight } = params;
+    console.log(this.storage[accessType].get(accessKey));
+    const record = this.storage[accessType].get(accessKey);
     if (record === undefined) {
-      return this.addJwtRecord(jwt, requestTimeStamp, rateWeight);
+      const newRecord = this.createNewRecord(requestTimeStamp, rateWeight);
+      this.storage[accessType].set(accessKey, newRecord);
+      return true;
     }
 
     const newRecord = this.getUpdatedRecord(
@@ -100,44 +90,15 @@ export class RateLimitService {
       requestTimeStamp,
       rateWeight,
     );
-    this.jwts.set(jwt, newRecord);
-    if (newRecord.length > this.jwtRequestLimit) {
-      newRecord.splice(0, newRecord.length - this.jwtRequestLimit);
+    this.storage[accessType].set(accessKey, newRecord);
+    if (newRecord.length > this.limits[accessType]) {
+      newRecord.splice(0, newRecord.length - this.limits[accessType]);
       const remainingTime = this.getRemainingTime(
         requestTimeStamp,
         newRecord,
-        this.jwtRequestLimit,
+        this.limits[accessType],
       );
-      this.throwError(this.jwtRequestLimit, remainingTime);
-    }
-    return true;
-  }
-
-  public ipRateLimit(
-    ip: string,
-    requestTimeStamp: number,
-    rateWeight: number,
-  ): boolean {
-    console.log(this.ips.get(ip));
-    const record = this.ips.get(ip);
-    if (record === undefined) {
-      return this.addIpRecord(ip, requestTimeStamp, rateWeight);
-    }
-
-    const newRecord = this.getUpdatedRecord(
-      record,
-      requestTimeStamp,
-      rateWeight,
-    );
-    this.ips.set(ip, newRecord);
-    if (newRecord.length > this.ipRequestLimit) {
-      newRecord.splice(0, newRecord.length - this.ipRequestLimit);
-      const remainingTime = this.getRemainingTime(
-        requestTimeStamp,
-        newRecord,
-        this.ipRequestLimit,
-      );
-      this.throwError(this.ipRequestLimit, remainingTime);
+      this.throwError(this.limits[accessType], remainingTime);
     }
     return true;
   }
