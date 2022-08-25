@@ -11,33 +11,31 @@ export class RateLimitService {
   private ipRequestLimit = Number(process.env.IP_REQUEST_LIMIT);
   private requestLimitMinutes = Number(process.env.REQUEST_LIMIT_MINUTES);
 
-  private getJwt(jwt: string): number[] {
-    return this.jwts.get(jwt);
-  }
-
-  private setJwt(jwt: string, payload: number[]): Map<string, number[]> {
-    return this.jwts.set(jwt, payload);
-  }
-
-  private addJwtRecord(jwt: string, requestTimeStamp: number): boolean {
+  private addJwtRecord(
+    jwt: string,
+    requestTimeStamp: number,
+    rateWeight: number,
+  ): boolean {
     const newRecord = [];
-    newRecord.push(requestTimeStamp);
-    this.setJwt(jwt, newRecord);
+    while (rateWeight > 0) {
+      newRecord.push(requestTimeStamp);
+      rateWeight -= 1;
+    }
+    this.jwts.set(jwt, newRecord);
     return true;
   }
 
-  private getIp(ip: string): number[] {
-    return this.ips.get(ip);
-  }
-
-  private setIp(ip: string, payload: number[]): Map<string, number[]> {
-    return this.ips.set(ip, payload);
-  }
-
-  private addIpRecord(ip: string, requestTimeStamp: number): boolean {
+  private addIpRecord(
+    ip: string,
+    requestTimeStamp: number,
+    rateWeight: number,
+  ): boolean {
     const newRecord = [];
-    newRecord.push(requestTimeStamp);
-    this.setIp(ip, newRecord);
+    while (rateWeight > 0) {
+      newRecord.push(requestTimeStamp);
+      rateWeight -= 1;
+    }
+    this.ips.set(ip, newRecord);
     return true;
   }
 
@@ -71,23 +69,40 @@ export class RateLimitService {
     );
   }
 
-  private getUpdatedRecord(record: number[], timestamp: number): number[] {
+  private getUpdatedRecord(
+    record: number[],
+    timestamp: number,
+    rateWeight: number,
+  ): number[] {
     const newRecord = record.filter((timestamp) => {
       return timestamp >= this.getWindowStartTimestamp(timestamp);
     });
-    newRecord.push(timestamp);
+    while (rateWeight > 0) {
+      newRecord.push(timestamp);
+      rateWeight -= 1;
+    }
     return newRecord;
   }
 
-  public jwtRateLimit(jwt: string, requestTimeStamp: number): boolean {
-    const record = this.getJwt(jwt);
+  public jwtRateLimit(
+    jwt: string,
+    requestTimeStamp: number,
+    rateWeight: number,
+  ): boolean {
+    console.log(this.jwts.get(jwt));
+    const record = this.jwts.get(jwt);
     if (record === undefined) {
-      return this.addJwtRecord(jwt, requestTimeStamp);
+      return this.addJwtRecord(jwt, requestTimeStamp, rateWeight);
     }
 
-    const newRecord = this.getUpdatedRecord(record, requestTimeStamp);
-    this.setJwt(jwt, newRecord);
+    const newRecord = this.getUpdatedRecord(
+      record,
+      requestTimeStamp,
+      rateWeight,
+    );
+    this.jwts.set(jwt, newRecord);
     if (newRecord.length > this.jwtRequestLimit) {
+      newRecord.splice(0, newRecord.length - this.jwtRequestLimit);
       const remainingTime = this.getRemainingTime(
         requestTimeStamp,
         newRecord,
@@ -98,15 +113,25 @@ export class RateLimitService {
     return true;
   }
 
-  public ipRateLimit(ip: string, requestTimeStamp: number): boolean {
-    const record = this.getIp(ip);
+  public ipRateLimit(
+    ip: string,
+    requestTimeStamp: number,
+    rateWeight: number,
+  ): boolean {
+    console.log(this.ips.get(ip));
+    const record = this.ips.get(ip);
     if (record === undefined) {
-      return this.addIpRecord(ip, requestTimeStamp);
+      return this.addIpRecord(ip, requestTimeStamp, rateWeight);
     }
 
-    const newRecord = this.getUpdatedRecord(record, requestTimeStamp);
-    this.setIp(ip, newRecord);
+    const newRecord = this.getUpdatedRecord(
+      record,
+      requestTimeStamp,
+      rateWeight,
+    );
+    this.ips.set(ip, newRecord);
     if (newRecord.length > this.ipRequestLimit) {
+      newRecord.splice(0, newRecord.length - this.ipRequestLimit);
       const remainingTime = this.getRemainingTime(
         requestTimeStamp,
         newRecord,
