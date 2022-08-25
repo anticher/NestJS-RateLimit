@@ -4,13 +4,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  public canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
+  public canActivate(context: ExecutionContext): boolean {
     const headers = context.switchToHttp().getRequest().headers;
 
     if (!headers.authorization) {
