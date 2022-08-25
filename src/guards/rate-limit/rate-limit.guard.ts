@@ -20,7 +20,6 @@ export class RateLimitGuard implements CanActivate {
       const requestTimeStamp = Date.now();
       const rateWeight =
         +this.reflector.get<string>('rateWeight', context.getHandler()) || 1;
-      console.log(rateWeight);
       if (controller === 'PrivateController') {
         const jwt = request.headers.authorization;
         return this.rateLimitService.checkRateLimit({

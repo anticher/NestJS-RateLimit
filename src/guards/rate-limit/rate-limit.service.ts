@@ -77,7 +77,6 @@ export class RateLimitService {
     rateWeight: number;
   }): boolean {
     const { accessType, accessKey, requestTimeStamp, rateWeight } = params;
-    console.log(this.storage[accessType].get(accessKey));
     const record = this.storage[accessType].get(accessKey);
     if (record === undefined) {
       const newRecord = this.createNewRecord(requestTimeStamp, rateWeight);
