@@ -8,12 +8,10 @@ import { RateLimitModule } from './guards/rate-limit/rate-limit.module';
 import { RateLimitGuard } from './guards/rate-limit/rate-limit.guard';
 import { APP_GUARD } from '@nestjs/core';
 
-const envType = process.env.NODE_ENV;
-
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: !envType ? '.env' : `.env.${envType}`,
+      envFilePath: '.env',
     }),
     PublicModule,
     PrivateModule,

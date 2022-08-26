@@ -14,7 +14,10 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException({ description: 'no auth token' });
     }
 
-    if (headers.authorization !== `Bearer ${process.env.JWT_TEST_TOKEN}`) {
+    if (
+      headers.authorization !== `Bearer ${process.env.JWT_TEST_TOKEN_1}` &&
+      headers.authorization !== `Bearer ${process.env.JWT_TEST_TOKEN_2}`
+    ) {
       throw new UnauthorizedException({ description: 'incorrect auth token' });
     }
 
