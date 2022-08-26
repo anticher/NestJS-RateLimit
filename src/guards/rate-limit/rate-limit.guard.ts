@@ -37,7 +37,11 @@ export class RateLimitGuard implements CanActivate {
         rateWeight,
       });
     } catch (error) {
-      if (error.message.startsWith('You have reached the limit of requests')) {
+      if (
+        error.message.startsWith(
+          "You have reached the API's hourly request limit",
+        )
+      ) {
         throw new HttpException(error.message, 429);
       }
       throw error;

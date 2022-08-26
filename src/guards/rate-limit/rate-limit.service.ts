@@ -41,11 +41,11 @@ export class RateLimitService {
 
   private throwError(limit: number, remainingTime: number): void {
     throw new Error(
-      'You have reached the limit of requests. Current limit for you ' +
+      "You have reached the API's hourly request limit - " +
         limit +
-        ' requests / hour. You can make the next request in ' +
+        ' requests. You can make the next request in ' +
         remainingTime +
-        ' minutes',
+        ' minutes.',
     );
   }
 
