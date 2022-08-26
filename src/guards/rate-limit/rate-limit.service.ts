@@ -57,14 +57,15 @@ export class RateLimitService {
 
   private getUpdatedRecord(
     record: number[],
-    timestamp: number,
+    requestTimeStamp: number,
     rateWeight: number,
   ): number[] {
+    const windowStartTimestamp = this.getWindowStartTimestamp(requestTimeStamp);
     const newRecord = record.filter((timestamp) => {
-      return timestamp >= this.getWindowStartTimestamp(timestamp);
+      return timestamp >= windowStartTimestamp;
     });
     while (rateWeight > 0) {
-      newRecord.push(timestamp);
+      newRecord.push(requestTimeStamp);
       rateWeight -= 1;
     }
     return newRecord;
@@ -83,7 +84,6 @@ export class RateLimitService {
       this.storage[accessType].set(accessKey, newRecord);
       return true;
     }
-
     const newRecord = this.getUpdatedRecord(
       record,
       requestTimeStamp,
